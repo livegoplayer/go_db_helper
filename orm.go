@@ -15,7 +15,7 @@ type MysqlConfig struct {
 	Password   string `json:"password"`
 	Host       string `json:"host"`
 	Port       int64  `json:"port"`
-	logMode    bool   `json:"log_mode"`
+	LogMode    bool   `json:"log_mode"`
 	MaxOpenCon int    `json:"max_open_con"`
 	MaxIdleCon int    `json:"max_idle_con"`
 	Dbname     string `json:"dbname"`
@@ -35,7 +35,7 @@ func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 		panic("连接数据库失败, error=" + err.Error())
 	}
 	//打开调试模式
-	db.LogMode(mysqlCfg.logMode)
+	db.LogMode(mysqlCfg.LogMode)
 
 	//设置数据库连接池参数
 	db.DB().SetMaxOpenConns(mysqlCfg.MaxOpenCon) //设置数据库连接池最大连接数
