@@ -11,14 +11,14 @@ type DbName string
 
 //这里存放的是一些封装
 type MysqlConfig struct {
-	Username   string
-	Password   string
-	Host       string
-	Port       int64
-	logMode    bool
-	MaxOpenCon int
-	MaxIdleCon int
-	Dbname     string
+	Username   string `json:"username"`
+	Password   string `json:"password"`
+	Host       string `json:"host"`
+	Port       int64  `json:"port"`
+	logMode    bool   `json:"log_mode"`
+	MaxOpenCon int    `json:"max_open_con"`
+	MaxIdleCon int    `json:"max_idle_con"`
+	Dbname     string `json:"dbname"`
 }
 
 var mysqlConfig *MysqlConfig
