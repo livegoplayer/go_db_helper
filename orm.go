@@ -62,20 +62,18 @@ func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	return db
 }
 
-func InitDbList(mysqlCfg map[DbName]map[DbType]*MysqlConfig) {
+func InitDbList(mysqlCfg map[DbName]*MysqlConfig) {
 	//初始化全局sql连接
-	for _, configM := range mysqlCfg {
-		for _, dbConfig := range configM{
-			if _db_list[DbName(dbConfig.Dbname)] == nil {
-				_db_list[DbName(dbConfig.Dbname)] = make(map[DbType]*gorm.DB, 0)
-			}
-			db := InitDbHelper(dbConfig)
+	for _, dbConfig := range mysqlCfg {
+		if _db_list[DbName(dbConfig.Dbname)] == nil {
+			_db_list[DbName(dbConfig.Dbname)] = make(map[DbType]*gorm.DB, 0)
+		}
+		db := InitDbHelper(dbConfig)
 
-			if dbConfig.IsWrite {
-				_db_list[DbName(dbConfig.Dbname)][WRITE] = db
-			} else {
-				_db_list[DbName(dbConfig.Dbname)][READ] = db
-			}
+		if dbConfig.IsWrite {
+			_db_list[DbName(dbConfig.Dbname)][WRITE] = db
+		} else {
+			_db_list[DbName(dbConfig.Dbname)][READ] = db
 		}
 	}
 }
