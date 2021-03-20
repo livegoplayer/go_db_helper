@@ -7,19 +7,24 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+type DbName string
+
 //这里存放的是一些封装
 type MysqlConfig struct {
-	Username string
-	Password string
-	Host     string
-	Port     int32
-	Dbname   string
+	Username   string
+	Password   string
+	Host       string
+	Port       int64
+	logMode    bool
+	MaxOpenCon int
+	MaxIdleCon int
+	Dbname     string
 }
 
 var mysqlConfig *MysqlConfig
-var _db *gorm.DB
+var _db_list map[DbName]*gorm.DB
 
-func InitDbHelper(mysqlCfg *MysqlConfig, logMode bool, MaxOpenCon int, MaxIdleCon int) {
+func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	//初始化全局sql连接
 
 	mysqlConfig = mysqlCfg
@@ -29,18 +34,33 @@ func InitDbHelper(mysqlCfg *MysqlConfig, logMode bool, MaxOpenCon int, MaxIdleCo
 	if err != nil {
 		panic("连接数据库失败, error=" + err.Error())
 	}
-	_db = db
-
 	//打开调试模式
-	db.LogMode(logMode)
+	db.LogMode(mysqlCfg.logMode)
 
 	//设置数据库连接池参数
-	_db.DB().SetMaxOpenConns(MaxOpenCon) //设置数据库连接池最大连接数
-	_db.DB().SetMaxIdleConns(MaxIdleCon) //连接池最大允许的空闲连接数，如果没有sql任务需要执行的连接数大于20，超过的连接会被连接池关闭。
+	db.DB().SetMaxOpenConns(mysqlCfg.MaxOpenCon) //设置数据库连接池最大连接数
+	db.DB().SetMaxIdleConns(mysqlCfg.MaxIdleCon) //连接池最大允许的空闲连接数，如果没有sql任务需要执行的连接数大于20，超过的连接会被连接池关闭。
+
+	return db
+}
+
+func InitDbList(mysqlCfg map[DbName]*MysqlConfig) {
+	//初始化全局sql连接
+	for dbName, config := range mysqlCfg {
+		db := InitDbHelper(config)
+		_db_list[dbName] = db
+	}
 }
 
 //获取gorm db对象，其他包需要执行数据库查询的时候，只要通过tools.getDB()获取db对象即可。
 //不用担心协程并发使用同样的db对象会共用同一个连接，db对象在调用他的方法的时候会从数据库连接池中获取新的连接
-func GetDB() *gorm.DB {
-	return _db
+func GetDBByName(name DbName) *gorm.DB {
+	if m, ok := _db_list[name]; ok {
+		return m
+	}
+	return nil
+}
+
+func GetDBList() map[DbName]*gorm.DB {
+	return _db_list
 }
