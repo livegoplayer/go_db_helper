@@ -3,7 +3,6 @@ package mysql
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
-	"github.com/livegoplayer/go_helper/utils"
 )
 
 func newOperat() *operat {
@@ -30,7 +29,7 @@ func (op operat) cumulateSet(col string, val interface{}) {
 	op.set[col] = val
 }
 
-func (op operat) raw() utils.H {
+func (op operat) raw() H {
 	raw := make(map[string]interface{})
 	for k, v := range op.set {
 		raw[k] = v

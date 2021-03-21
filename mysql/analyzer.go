@@ -3,7 +3,6 @@ package mysql
 import (
 	"errors"
 	"github.com/jinzhu/gorm"
-	"github.com/livegoplayer/go_helper/utils"
 	"runtime/debug"
 	"strings"
 	"time"
@@ -104,7 +103,7 @@ func (alz *Analyzer) Analyze() error {
 	}
 
 	for _, exp := range alz.Explains {
-		if utils.StrInSlice(alz.tableIgnores, exp.Table) {
+		if StrInSlice(alz.tableIgnores, exp.Table) {
 			continue
 		}
 
@@ -191,7 +190,7 @@ func AnalyzerCallbackV2(sql string, vars []interface{}, dura time.Duration) {
 		id := time.Now().UnixNano()
 		Logger.Error("慢数据查询:" + sql)
 		if explainLevel == 2 {
-			panic("mysql-slow-" + utils.AsString(id))
+			panic("mysql-slow-" + AsString(id))
 		}
 	}()
 }

@@ -3,7 +3,6 @@ package mysql
 import (
 	"database/sql"
 	"github.com/jinzhu/gorm"
-	"github.com/livegoplayer/go_helper/utils"
 	"reflect"
 	"sort"
 	"strconv"
@@ -42,7 +41,7 @@ type Build struct {
 	joins         []joins
 	selects       []string
 	group         string
-	sets          utils.H
+	sets          H
 	orders        []order
 	offset        int
 	limit         int
@@ -82,7 +81,7 @@ func NewBuild(model interface{}) *Build {
 		build.model = model
 	}
 	build.wheres = []wheres{}
-	build.sets = make(utils.H)
+	build.sets = make(H)
 	build.bindings = []interface{}{}
 	build.operate = newOperat()
 	return build
@@ -364,7 +363,7 @@ func (build *Build) math(col string, method string) float64 {
 	return s.Ret
 }
 
-func (build *Build) Update(h utils.H) int64 {
+func (build *Build) Update(h H) int64 {
 	g := build.newGorm().Where(build.whereQuery(), build.bindings...).Updates(h)
 	build.dealError(g)
 	return g.RowsAffected
@@ -419,7 +418,7 @@ func (build *Build) Insert(argu interface{}) {
 		if !ok {
 			panic("插入数据缺少分表值")
 		}
-		idx := split.splitIdx(utils.AsInt64(v))
+		idx := split.splitIdx(AsInt64(v))
 		_, ok = splitData[idx]
 		if !ok {
 			splitData[idx] = make([]map[string]interface{}, 0)
@@ -441,7 +440,7 @@ func (build *Build) Delete() int64 {
 		return g.RowsAffected
 	}
 	col, _, delVal := softer.SoftDeleted()
-	return build.Update(utils.H{col: delVal})
+	return build.Update(H{col: delVal})
 }
 
 // 将刚刚积累的操作，一次性执行到数据库

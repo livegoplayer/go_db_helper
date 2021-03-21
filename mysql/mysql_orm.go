@@ -4,7 +4,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	"github.com/livegoplayer/go_helper/utils"
 	"github.com/sirupsen/logrus"
 )
 
@@ -47,7 +46,7 @@ func InitDbHelper(mysqlCfg *MysqlConfig, l *logrus.Logger) *gorm.DB {
 	mcfg := &mysql.Config{
 		User:                 mysqlCfg.Username,
 		Passwd:               mysqlCfg.Password,
-		Addr:                 mysqlCfg.Host + ":" + utils.AsString(mysqlCfg.Port),
+		Addr:                 mysqlCfg.Host + ":" + AsString(mysqlCfg.Port),
 		Collation:            mysqlCfg.Collation,
 		Net:                  mysqlCfg.Net,
 		AllowNativePasswords: mysqlCfg.AllowNativePasswords,
@@ -101,4 +100,10 @@ func GetDBByName(name DbName) map[DbType]*gorm.DB {
 
 func GetDBList() map[DbName]map[DbType]*gorm.DB {
 	return _db_list
+}
+
+func init() {
+	if _db_list == nil {
+		_db_list = make(map[DbName]map[DbType]*gorm.DB)
+	}
 }
