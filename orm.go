@@ -2,10 +2,11 @@ package dbHelper
 
 import (
 	"github.com/go-sql-driver/mysql"
-	"github.com/livegoplayer/go_helper/utils"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
+	m "github.com/livegoplayer/go_db_helper/mysql"
+	"github.com/livegoplayer/go_helper/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type DbName string
@@ -13,23 +14,23 @@ type DbType string
 
 const (
 	WRITE DbType = "write"
-	READ DbType = "read"
+	READ  DbType = "read"
 )
 
 //这里存放的是一些封装
 type MysqlConfig struct {
-	Username             string       `json:"username"`
-	Password             string       `json:"password"`
-	Host                 string       `json:"host"`
-	Port                 int64        `json:"port"`
-	Collation            string       `json:"collation"`
-	LogMode              bool         `json:"log_mode"`
-	Net                  string       `json:"net"`
-	AllowNativePasswords bool         `json:"allow_native_passwords"`
-	MaxOpenCon           int          `json:"max_open_con"`
-	MaxIdleCon           int          `json:"max_idle_con"`
-	Dbname               string       `json:"dbname"`
-	IsWrite              bool       `json:"is_write"`
+	Username             string `json:"username"`
+	Password             string `json:"password"`
+	Host                 string `json:"host"`
+	Port                 int64  `json:"port"`
+	Collation            string `json:"collation"`
+	LogMode              bool   `json:"log_mode"`
+	Net                  string `json:"net"`
+	AllowNativePasswords bool   `json:"allow_native_passwords"`
+	MaxOpenCon           int    `json:"max_open_con"`
+	MaxIdleCon           int    `json:"max_idle_con"`
+	Dbname               string `json:"dbname"`
+	IsWrite              bool   `json:"is_write"`
 }
 
 var mysqlConfig *MysqlConfig
@@ -39,13 +40,13 @@ var DefaultDbName string
 func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	//初始化全局sql连接
 	mcfg := &mysql.Config{
-		User: mysqlCfg.Username,
-		Passwd: mysqlCfg.Password,
-		Addr: mysqlCfg.Host + ":" + utils.AsString(mysqlCfg.Port),
-		Collation: mysqlCfg.Collation,
-		Net: mysqlCfg.Net,
+		User:                 mysqlCfg.Username,
+		Passwd:               mysqlCfg.Password,
+		Addr:                 mysqlCfg.Host + ":" + utils.AsString(mysqlCfg.Port),
+		Collation:            mysqlCfg.Collation,
+		Net:                  mysqlCfg.Net,
 		AllowNativePasswords: mysqlCfg.AllowNativePasswords,
-		DBName: mysqlCfg.Dbname,
+		DBName:               mysqlCfg.Dbname,
 	}
 	mysqlDsn := mcfg.FormatDSN()
 
@@ -94,4 +95,10 @@ func GetDBByName(name DbName) map[DbType]*gorm.DB {
 
 func GetDBList() map[DbName]map[DbType]*gorm.DB {
 	return _db_list
+}
+
+func SetLogger(logger *logrus.Logger) {
+	if logger != nil {
+		m.SetLogger(logger)
+	}
 }
