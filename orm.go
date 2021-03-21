@@ -34,6 +34,7 @@ type MysqlConfig struct {
 
 var mysqlConfig *MysqlConfig
 var _db_list map[DbName]map[DbType]*gorm.DB
+var DefaultDbName string
 
 func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	//初始化全局sql连接
@@ -62,7 +63,7 @@ func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	return db
 }
 
-func InitDbList(mysqlCfg map[DbName]*MysqlConfig) {
+func InitDbList(mysqlCfg map[DbName]*MysqlConfig, defaultDbName string) {
 	//初始化全局sql连接
 	for _, dbConfig := range mysqlCfg {
 		if _db_list[DbName(dbConfig.Dbname)] == nil {
@@ -74,6 +75,10 @@ func InitDbList(mysqlCfg map[DbName]*MysqlConfig) {
 			_db_list[DbName(dbConfig.Dbname)][WRITE] = db
 		} else {
 			_db_list[DbName(dbConfig.Dbname)][READ] = db
+		}
+
+		if defaultDbName != "" {
+			DefaultDbName = defaultDbName
 		}
 	}
 }
