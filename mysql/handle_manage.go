@@ -21,7 +21,7 @@ const (
 type task struct {
 	backch backChan
 	key    int64
-	con    string
+	con    DbName
 	opera  string
 }
 
@@ -36,19 +36,19 @@ type sendChan chan *task
 var send sendChan
 var transactionHandleMap map[string]*transaction
 
-func newHandle(key int64, con string) backTransaction {
+func newHandle(key int64, con DbName) backTransaction {
 	ch := make(backChan)
 	send <- &task{backch: ch, opera: _ADD, key: key, con: con}
 	return <-ch
 }
 
-func getHandle(key int64, con string) backTransaction {
+func getHandle(key int64, con DbName) backTransaction {
 	ch := make(backChan)
 	send <- &task{key: key, backch: ch, opera: _FIND, con: con}
 	return <-ch
 }
 
-func removeHandle(key int64, con string) {
+func removeHandle(key int64, con DbName) {
 	ch := make(backChan)
 	send <- &task{key: key, backch: ch, opera: _REMOVE, con: con}
 	<-ch
@@ -74,7 +74,7 @@ func init() {
 	go func(ch sendChan) {
 		for {
 			task := <-ch
-			mapIdx := strconv.FormatInt(task.key, 10) + "_" + task.con
+			mapIdx := strconv.FormatInt(task.key, 10) + "_" + task.con.String()
 			switch task.opera {
 			case _ADD:
 				oh, ok := transactionHandleMap[mapIdx]
@@ -82,8 +82,8 @@ func init() {
 					task.backch <- backTransaction{key: task.key, trans: oh}
 					continue
 				}
-				//fmt.Println(models[task.con])
-				tx := models[task.con][Write].Begin()
+				//fmt.Println(_db_list[task.con])
+				tx := _db_list[task.con][WRITE].Begin()
 				h := &transaction{db: tx}
 				transactionHandleMap[mapIdx] = h
 				task.backch <- backTransaction{key: task.key, trans: h}

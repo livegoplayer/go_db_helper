@@ -2,14 +2,14 @@ package mysql
 
 //开启一个事务执行回调，推荐使用，防止错误使用commit和rollback
 func Transaction(argus ...interface{}) {
-	var con string
+	var con DbName
 	var cb func()
 	switch argus[0].(type) {
 	case string:
-		con = argus[0].(string)
+		con = argus[0].(DbName)
 		cb = argus[1].(func())
 	default:
-		con = DefaultCon
+		con = DefaultDbName
 		cb = argus[0].(func())
 	}
 	Begin(con)
@@ -27,11 +27,11 @@ func Transaction(argus ...interface{}) {
 
 //推荐使用Transaction函数
 func Begin(cons ...interface{}) {
-	var con string
+	var con DbName
 	if len(con) == 0 {
-		con = DefaultCon
+		con = DefaultDbName
 	} else {
-		con = cons[0].(string)
+		con = cons[0].(DbName)
 	}
 	gid := getSlow()
 	h := newHandle(gid, con).trans
@@ -40,11 +40,11 @@ func Begin(cons ...interface{}) {
 
 //推荐使用Transaction函数
 func Commit(cons ...interface{}) {
-	var con string
+	var con DbName
 	if len(con) == 0 {
-		con = DefaultCon
+		con = DefaultDbName
 	} else {
-		con = cons[0].(string)
+		con = cons[0].(DbName)
 	}
 	gid := getSlow()
 	handle := getHandle(gid, con).trans
@@ -65,11 +65,11 @@ func Commit(cons ...interface{}) {
 
 //推荐使用Transaction函数
 func Rollback(cons ...interface{}) {
-	var con string
+	var con DbName
 	if len(con) == 0 {
-		con = DefaultCon
+		con = DefaultDbName
 	} else {
-		con = cons[0].(string)
+		con = cons[0].(DbName)
 	}
 	gid := getSlow()
 	handle := getHandle(gid, con).trans
@@ -89,6 +89,6 @@ func Rollback(cons ...interface{}) {
 }
 
 //当事务结束时，移除事务的句柄
-func removeTransactionHandle(gid int64, con string) {
+func removeTransactionHandle(gid int64, con DbName) {
 	removeHandle(gid, con)
 }

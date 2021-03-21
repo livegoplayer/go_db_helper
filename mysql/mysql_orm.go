@@ -1,10 +1,9 @@
-package dbHelper
+package mysql
 
 import (
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
-	m "github.com/livegoplayer/go_db_helper/mysql"
 	"github.com/livegoplayer/go_helper/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -16,6 +15,10 @@ const (
 	WRITE DbType = "write"
 	READ  DbType = "read"
 )
+
+func (name DbName) String() string {
+	return string(name)
+}
 
 //这里存放的是一些封装
 type MysqlConfig struct {
@@ -33,11 +36,13 @@ type MysqlConfig struct {
 	IsWrite              bool   `json:"is_write"`
 }
 
-var mysqlConfig *MysqlConfig
 var _db_list map[DbName]map[DbType]*gorm.DB
-var DefaultDbName string
+var DefaultDbName DbName
 
-func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
+var Model *gorm.DB
+
+func InitDbHelper(mysqlCfg *MysqlConfig, l *logrus.Logger) *gorm.DB {
+	SetLogger(l)
 	//初始化全局sql连接
 	mcfg := &mysql.Config{
 		User:                 mysqlCfg.Username,
@@ -57,6 +62,7 @@ func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	}
 	//打开调试模式
 	db.LogMode(mysqlCfg.LogMode)
+	db.SetLogger(&logger{})
 
 	//设置数据库连接池参数
 	db.DB().SetMaxOpenConns(mysqlCfg.MaxOpenCon) //设置数据库连接池最大连接数
@@ -64,13 +70,13 @@ func InitDbHelper(mysqlCfg *MysqlConfig) *gorm.DB {
 	return db
 }
 
-func InitDbList(mysqlCfg map[DbName]*MysqlConfig, defaultDbName string) {
+func InitDbList(mysqlCfg map[DbName]*MysqlConfig, defaultDbName DbName, logger *logrus.Logger) {
 	//初始化全局sql连接
 	for _, dbConfig := range mysqlCfg {
 		if _db_list[DbName(dbConfig.Dbname)] == nil {
 			_db_list[DbName(dbConfig.Dbname)] = make(map[DbType]*gorm.DB, 0)
 		}
-		db := InitDbHelper(dbConfig)
+		db := InitDbHelper(dbConfig, logger)
 
 		if dbConfig.IsWrite {
 			_db_list[DbName(dbConfig.Dbname)][WRITE] = db
@@ -95,10 +101,4 @@ func GetDBByName(name DbName) map[DbType]*gorm.DB {
 
 func GetDBList() map[DbName]map[DbType]*gorm.DB {
 	return _db_list
-}
-
-func SetLogger(logger *logrus.Logger) {
-	if logger != nil {
-		m.SetLogger(logger)
-	}
 }

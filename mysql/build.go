@@ -51,7 +51,7 @@ type Build struct {
 	effectRow     int64  // 执行sql影响的行数
 	isSetSplitVal bool   // 是否设置过分表值，因为splitVal有可能设为初始值0
 	splitVal      int64  // 分表值
-	con           string // 指定使用的连接
+	con           DbName // 指定使用的连接
 	isOnWrite     bool   // 是否强制读主库
 	unscoped      bool
 	operate       *operat
@@ -560,13 +560,13 @@ func (build *Build) newCon() *gorm.DB {
 	h := getHandle(gid, con).trans
 	if h == nil {
 		if build.isOnWrite {
-			if _, ok := models[con][Write]; !ok {
-				g = models[con][Write]
+			if _, ok := _db_list[con][WRITE]; !ok {
+				g = _db_list[con][WRITE]
 			} else {
-				g = models[con][Proxy]
+				g = _db_list[con][READ]
 			}
 		} else {
-			g = models[con][Proxy]
+			g = _db_list[con][READ]
 		}
 	} else {
 		g = h.db
@@ -794,9 +794,9 @@ func formatBindings(list []map[string]interface{}, keys []string) []interface{} 
 }
 
 // 获取连接名
-func (build *Build) getConName() string {
+func (build *Build) getConName() DbName {
 	type conInterface interface {
-		Connect() string
+		Connect() DbName
 	}
 
 	if build.con != "" {
@@ -804,7 +804,7 @@ func (build *Build) getConName() string {
 	}
 
 	if build.model == nil {
-		return DefaultCon
+		return DefaultDbName
 	}
 	reflectType := reflect.ValueOf(build.model).Type()
 	for reflectType.Kind() == reflect.Slice || reflectType.Kind() == reflect.Ptr {
@@ -814,7 +814,7 @@ func (build *Build) getConName() string {
 	if ok {
 		return reflect.New(reflectType).Interface().(conInterface).Connect()
 	}
-	return DefaultCon
+	return DefaultDbName
 }
 
 type softer interface {
