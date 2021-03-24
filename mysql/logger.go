@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"github.com/sirupsen/logrus"
+	"os"
 	"time"
 )
 
@@ -18,6 +19,8 @@ func SetLogger(logger *logrus.Logger) {
 
 func init() {
 	Logger = logrus.New()
+	Logger.SetFormatter(&logrus.TextFormatter{})
+	Logger.SetOutput(os.Stdout)
 }
 
 type logger struct{}
