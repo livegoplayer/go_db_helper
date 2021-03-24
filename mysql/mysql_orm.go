@@ -87,6 +87,16 @@ func InitDbList(mysqlCfg map[DbName]*MysqlConfig, defaultDbName DbName, logger *
 			DefaultDbName = defaultDbName
 		}
 	}
+
+	for _, info := range _db_list {
+		if info[READ] != nil {
+			continue
+		}
+
+		if info[WRITE] != nil {
+			info[READ] = info[WRITE]
+		}
+	}
 }
 
 //获取gorm db对象，其他包需要执行数据库查询的时候，只要通过tools.getDB()获取db对象即可。
