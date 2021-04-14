@@ -260,7 +260,7 @@ func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	return build.update(p)
 }
 
-func Update{{$name}}By{{.StructKey}}sWhatEver(x []{{.Type}}, p *{{$name}}) int64 {
+func Update{{$name}}By{{.StructKey}}sWhatEver (x []{{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 
 	if len(x) == 1 {
@@ -272,7 +272,7 @@ func Update{{$name}}By{{.StructKey}}sWhatEver(x []{{.Type}}, p *{{$name}}) int64
 	return build.update(p)
 }
 
-func Update{{$name}}By{{.StructKey}}(x {{.Type}}, p *{{$name}}) int64 {
+func Update{{$name}}By{{.StructKey}} (x {{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 	build.kWhe{{.StructKey}}(x)
 	return build.update(p)
@@ -301,6 +301,28 @@ func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 
 func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
+}
+
+func Update{{$name}}By{{.StructKey}} (x {{.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	build.kWhe{{.StructKey}}(x)
+	return build.update(p)
+}
+
+func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+
+	if len(x) == 0 {
+		return 0
+	}
+
+	if len(x) == 1 {
+		build.kWhe{{.StructKey}}(x[0])
+	}else{
+		build.kWhe{{.StructKey}}In(x)
+	}
+
+	return build.update(p)
 }
 {{end}}
 `
