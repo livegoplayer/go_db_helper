@@ -363,7 +363,7 @@ func (build *Build) math(col string, method string) float64 {
 	return s.Ret
 }
 
-func (build *Build) Update(h H) int64 {
+func (build *Build) Update(h interface{}) int64 {
 	g := build.newGorm().Where(build.whereQuery(), build.bindings...).Updates(h)
 	build.dealError(g)
 	return g.RowsAffected

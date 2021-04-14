@@ -298,7 +298,7 @@ func (m *{{.QueryName}}) DoneOperate() int64 {
 	return m.GetBuild().ModelType(&s).DoneOperate()
 }
 
-func (m *{{.QueryName}}) Update(h mysql.H) int64 {
+func (m *{{.QueryName}}) Update(h *{{.TypeName}}) int64 {
 	s := {{.TypeName}}{}
 	return m.GetBuild().ModelType(&s).Update(h)
 }
