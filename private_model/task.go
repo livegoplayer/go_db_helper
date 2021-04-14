@@ -228,6 +228,7 @@ func (m *{{$queryName}}) kWhe{{.StructKey}}NotIn(values interface{}) *{{$queryNa
 func (mt Task) BasePublicBuildQueryTemplate() string {
 	return `
 {{ $name := .TypeName }}
+{{ $queryName := .QueryName }}
 
 {{range .Fields.UniIndex}}
 func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
