@@ -258,11 +258,11 @@ func CheckExistBy{{.StructKey}} (m {{.Type}}) bool {
 	return cnt > 0
 }
 
-func GetOneBy{{.StructKey}} (m {{.Type}}) *File {
+func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
 }
 
-func GetFirstBy{{.StructKey}} (m {{.Type}}) *File {
+func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
 }
 {{end}}
