@@ -261,7 +261,7 @@ func GetOneBy{{.StructKey}} (m {{.Type}}) *File {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
 }
 
-func GetFirstBy (m {{.Type}}) *File {
+func GetFirstBy{{.StructKey}} (m {{.Type}}) *File {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
 }
 {{end}}
