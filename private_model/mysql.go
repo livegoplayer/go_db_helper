@@ -331,7 +331,26 @@ func (m *{{.QueryName}}) Increment(column string, amount int) int64 {
 	return m.GetBuild().ModelType(&s).Increment(column, amount)
 }
 
+func Update{{.TypeName}}ByIds(ids []int64, p *{{.TypeName}}) int64 {
+	build := NewRetUserPathQuery()
 
+	if len(ids) == 0 {
+		return 0
+	}
+
+	if len(ids) == 1 {
+		build.kWheId(ids[0])
+	}else{
+		build.kWheIdIn(ids)
+	}
+
+	return build.update(p)
+}
+
+func Save(f *{{.TypeName}}) *{{.TypeName}} {
+	New{{.QueryName}}().save(f)
+	return f
+}
 `
 }
 
