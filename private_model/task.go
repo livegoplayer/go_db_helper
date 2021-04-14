@@ -62,16 +62,18 @@ type DefineField struct {
 	Type      string
 	IsPrimary bool
 	IsUnique  bool
+	IsMulti   bool
 	Number    bool
 }
 
 type Fields struct {
-	All      []DefineField
-	Number   []DefineField
-	Pluck    []DefineField
-	PluckUni []DefineField
-	UniIndex []DefineField
-	Map      []DefineField
+	All        []DefineField
+	Number     []DefineField
+	Pluck      []DefineField
+	PluckUni   []DefineField
+	UniIndex   []DefineField
+	MultiIndex []DefineField
+	Map        []DefineField
 }
 
 type Func struct {
@@ -287,6 +289,18 @@ func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 
 func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
 	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
+}
+{{end}}{{range .Fields.MultiIndex}}
+func FetchBy{{.StructKey}} (m {{.Type}}) {{$name}}Collect {
+	return New{{$queryName}}().kWhe{{.StructKey}}(m).Get()
+}
+
+func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
+	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
+}
+
+func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
+	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
 }
 {{end}}
 `

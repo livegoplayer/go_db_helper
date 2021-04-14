@@ -129,6 +129,10 @@ func Parse(APPRoot string) {
 			if field.Key == "UNI" {
 				t.Fields[k].ColumnPrimaryStr = ";UNIQUE_KEY"
 			}
+
+			if field.Key == "MUL" {
+				t.Fields[k].ColumnPrimaryStr = ";MULTI_KEY"
+			}
 		}
 
 		name := Name

@@ -55,6 +55,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 
 		isPrimary := false
 		isUnique := false
+		isMuti := false
 		// 获取 column name
 		if len(field) > 3 {
 			// 存在 column
@@ -68,6 +69,9 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 					if field[3][sp:] == ";UNIQUE_KEY" {
 						isUnique = true
 					}
+					if field[3][sp:] == ";MULTI_KEY" {
+						isMuti = true
+					}
 					field[3] = field[3][begin:sp]
 				} else {
 					field[3] = field[3][begin:]
@@ -79,7 +83,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 			continue
 		}
 		isNum := IsExists(field[2], []string{"int64", "int", "float64", "float32"})
-		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary, IsUnique: isUnique})
+		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary, IsUnique: isUnique, IsMulti: isMuti})
 	}
 
 	return names
@@ -147,6 +151,7 @@ func (mt *MysqlTask) Run() {
 func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineField) string {
 	nums := make([]DefineField, 0)
 	UniIndex := make([]DefineField, 0)
+	MultiIndex := make([]DefineField, 0)
 	for _, i := range filed {
 		if i.Number {
 			nums = append(nums, i)
@@ -155,14 +160,19 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 		if i.IsPrimary || i.IsUnique {
 			UniIndex = append(UniIndex, i)
 		}
+
+		if i.IsMulti {
+			MultiIndex = append(MultiIndex, i)
+		}
 	}
 	t := Render{funcs, typeName, typeName + "Query", mt.DriverName, Fields{
-		All:      filed,
-		Pluck:    filed,
-		PluckUni: filed,
-		Map:      filed,
-		Number:   nums,
-		UniIndex: UniIndex,
+		All:        filed,
+		Pluck:      filed,
+		PluckUni:   filed,
+		Map:        filed,
+		Number:     nums,
+		UniIndex:   UniIndex,
+		MultiIndex: MultiIndex,
 	}}
 
 	code := t.Render(mt.ExecTemplate())
@@ -183,7 +193,7 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 func (mt *MysqlTask) getAllTypeName() ([]string, [][]DefineField) {
 	files, _ := ioutil.ReadDir(mt.FromDirPath)
 	tables := make([]string, 0)
-	fileds := make([][]DefineField, 0)
+	fields := make([][]DefineField, 0)
 	for _, f := range files {
 
 		if f.IsDir() {
@@ -213,10 +223,10 @@ func (mt *MysqlTask) getAllTypeName() ([]string, [][]DefineField) {
 		}
 
 		filed := mt.parseField(targetStructStr[0])
-		fileds = append(fileds, filed)
+		fields = append(fields, filed)
 		tables = append(tables, name)
 	}
-	return tables, fileds
+	return tables, fields
 }
 
 // 执行后获得结果的方法模板
