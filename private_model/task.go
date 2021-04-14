@@ -253,6 +253,24 @@ func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	return build.update(p)
 }
 
+func Update{{$name}}By{{.StructKey}}sWhatEver(x []{{.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+
+	if len(x) == 1 {
+		build.kWhe{{.StructKey}}(x[0])
+	}else if len(x) > 1{
+		build.kWhe{{.StructKey}}In(x)
+	}
+
+	return build.update(p)
+}
+
+func Update{{$name}}By{{.StructKey}}(x {{.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	build.kWhe{{.StructKey}}(x)
+	return build.update(p)
+}
+
 func CheckExistBy{{.StructKey}} (m {{.Type}}) bool {
 	cnt := New{{$queryName}}().kWhe{{.StructKey}}(m).Count()
 	return cnt > 0
