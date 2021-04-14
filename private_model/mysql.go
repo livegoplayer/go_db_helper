@@ -54,6 +54,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 		// field[4] json tag
 
 		isPrimary := false
+		isUnique := false
 		// 获取 column name
 		if len(field) > 3 {
 			// 存在 column
@@ -62,7 +63,12 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 				// 区分 gorm:"column:theater_id;PRIMARY_KEY"
 				if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
 					field[3] = field[3][begin:sp]
-					isPrimary = true
+					if field[3][sp:] == ";PRIMARY_KEY" {
+						isPrimary = true
+					}
+					if field[3][sp:] == ";UNIQUE_KEY" {
+						isUnique = true
+					}
 				} else {
 					field[3] = field[3][begin:]
 				}
@@ -73,7 +79,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 			continue
 		}
 		isNum := IsExists(field[2], []string{"int64", "int", "float64", "float32"})
-		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary})
+		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary, IsUnique: isUnique})
 	}
 
 	return names
@@ -146,7 +152,7 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 			nums = append(nums, i)
 		}
 
-		if i.IsPrimary {
+		if i.IsPrimary || i.IsUnique {
 			UniIndex = append(UniIndex, i)
 		}
 	}

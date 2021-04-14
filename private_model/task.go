@@ -61,6 +61,7 @@ type DefineField struct {
 	Key       string
 	Type      string
 	IsPrimary bool
+	IsUnique  bool
 	Number    bool
 }
 
