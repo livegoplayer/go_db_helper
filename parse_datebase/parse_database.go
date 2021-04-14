@@ -121,9 +121,9 @@ func Parse(APPRoot string) {
 			}
 		}
 
-		for _, field := range fields {
+		for k, field := range fields {
 			if field.Key == "PRI" {
-				field.ColumnPrimaryStr = ";PRIMARY_KEY"
+				fields[k].ColumnPrimaryStr = ";PRIMARY_KEY"
 			}
 		}
 
