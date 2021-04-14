@@ -248,7 +248,7 @@ func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 }
 
 func Save(f *{{$name}}) *{{$name}} {
-	New{{.QueryName}}().save(f)
+	New{{$queryName}}().save(f)
 	return f
 }
 {{end}}
