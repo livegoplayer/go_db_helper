@@ -169,6 +169,8 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 	} else {
 		code += t.Render(mt.PublicBuildQueryTemplate())
 	}
+
+	code += t.Render(mt.BasePublicBuildQueryTemplate())
 	return code
 }
 
