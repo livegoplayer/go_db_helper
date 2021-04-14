@@ -62,13 +62,13 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 				begin := pos + len("column:")
 				// 区分 gorm:"column:theater_id;PRIMARY_KEY"
 				if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
-					field[3] = field[3][begin:sp]
 					if field[3][sp:] == ";PRIMARY_KEY" {
 						isPrimary = true
 					}
 					if field[3][sp:] == ";UNIQUE_KEY" {
 						isUnique = true
 					}
+					field[3] = field[3][begin:sp]
 				} else {
 					field[3] = field[3][begin:]
 				}
