@@ -251,6 +251,19 @@ func Save(f *{{$name}}) *{{$name}} {
 	New{{$queryName}}().save(f)
 	return f
 }
+
+func CheckExistBy{{.StructKey}}(m {{.Type}}) bool {
+	cnt := New{{$queryName}}().kWhe{{.StructKey}(m).Count()
+	return cnt > 0
+}
+
+func GetOneBy{{.StructKey}}(m {{.Type}}) *File {
+	return New{{$queryName}}().kWhe{{.StructKey}(m).GetOne()
+}
+
+func GetFirstBy(m string) *File {
+	return New{{$queryName}}().kWhe{{.StructKey}(m).First()
+}
 {{end}}
 `
 }
