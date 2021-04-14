@@ -271,6 +271,11 @@ func Update{{$name}}By{{.StructKey}}(x {{.Type}}, p *{{$name}}) int64 {
 	return build.update(p)
 }
 
+func Update{{$name}}All(p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	return build.update(p)
+}
+
 func CheckExistBy{{.StructKey}} (m {{.Type}}) bool {
 	cnt := New{{$queryName}}().kWhe{{.StructKey}}(m).Count()
 	return cnt > 0
