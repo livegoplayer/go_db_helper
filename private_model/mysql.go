@@ -53,6 +53,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 		// field[3] gorm tag
 		// field[4] json tag
 
+		isPrimary := false
 		// 获取 column name
 		if len(field) > 3 {
 			// 存在 column
@@ -61,6 +62,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 				// 区分 gorm:"column:theater_id;PRIMARY_KEY"
 				if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
 					field[3] = field[3][begin:sp]
+					isPrimary = true
 				} else {
 					field[3] = field[3][begin:]
 				}
@@ -71,7 +73,7 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 			continue
 		}
 		isNum := IsExists(field[2], []string{"int64", "int", "float64", "float32"})
-		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum})
+		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary})
 	}
 
 	return names
@@ -138,9 +140,14 @@ func (mt *MysqlTask) Run() {
 
 func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineField) string {
 	nums := make([]DefineField, 0)
+	UniIndex := make([]DefineField, 0)
 	for _, i := range filed {
 		if i.Number {
 			nums = append(nums, i)
+		}
+
+		if i.IsPrimary {
+			UniIndex = append(UniIndex, i)
 		}
 	}
 	t := Render{funcs, typeName, typeName + "Query", mt.DriverName, Fields{
@@ -149,6 +156,7 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 		PluckUni: filed,
 		Map:      filed,
 		Number:   nums,
+		UniIndex: UniIndex,
 	}}
 
 	code := t.Render(mt.ExecTemplate())
@@ -329,27 +337,6 @@ func (m *{{.QueryName}}) Increment(column string, amount int) int64 {
 	}
 	s := {{.TypeName}}{}
 	return m.GetBuild().ModelType(&s).Increment(column, amount)
-}
-
-func Update{{.TypeName}}ByIds(ids []int64, p *{{.TypeName}}) int64 {
-	build := NewRetUserPathQuery()
-
-	if len(ids) == 0 {
-		return 0
-	}
-
-	if len(ids) == 1 {
-		build.kWheId(ids[0])
-	}else{
-		build.kWheIdIn(ids)
-	}
-
-	return build.update(p)
-}
-
-func Save(f *{{.TypeName}}) *{{.TypeName}} {
-	New{{.QueryName}}().save(f)
-	return f
 }
 `
 }

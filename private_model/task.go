@@ -60,6 +60,7 @@ type DefineField struct {
 	StructKey string
 	Key       string
 	Type      string
+	IsPrimary bool
 	Number    bool
 }
 
@@ -68,6 +69,7 @@ type Fields struct {
 	Number   []DefineField
 	Pluck    []DefineField
 	PluckUni []DefineField
+	UniIndex []DefineField
 	Map      []DefineField
 }
 
@@ -196,7 +198,6 @@ func (m *{{$queryName}}) kWhe{{.StructKey}}(args ...interface{}) *{{$queryName}}
 }
 {{end}}
 
-
 {{range .Fields.All}}
 func (m *{{$queryName}}) kSet{{.StructKey}}(val interface{}) *{{$queryName}}{
 	return m.Set("{{.Key}}", val)
@@ -209,8 +210,6 @@ func (m *{{$queryName}}) kInc{{.StructKey}}(num int) *{{$queryName}}{
 }
 {{end}}
 
-
-
 {{range .Fields.All}}
 func (m *{{$queryName}}) kWhe{{.StructKey}}In(values interface{}) *{{$queryName}}{
 	return m.whereIn("{{.Key}}", values)
@@ -220,6 +219,36 @@ func (m *{{$queryName}}) kWhe{{.StructKey}}In(values interface{}) *{{$queryName}
 {{range .Fields.All}}
 func (m *{{$queryName}}) kWhe{{.StructKey}}NotIn(values interface{}) *{{$queryName}}{
 	return m.whereNotIn("{{.Key}}", values)
+}
+{{end}}
+`
+}
+
+// 一些常用的
+func (mt Task) BasePublicBuildQueryTemplate() string {
+	return `
+{{ $name := .TypeName }}
+
+{{range .Fields.UniIndex}}
+func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+
+	if len(x) == 0 {
+		return 0
+	}
+
+	if len(x) == 1 {
+		build.kWhe{{.StructKey}}(x[0])
+	}else{
+		build.kWhe{{.StructKey}}In(x)
+	}
+
+	return build.update(p)
+}
+
+func Save(f *{{$name}}) *{{$name}} {
+	New{{.QueryName}}().save(f)
+	return f
 }
 {{end}}
 `
