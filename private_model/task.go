@@ -231,6 +231,11 @@ func (mt Task) BasePublicBuildQueryTemplate() string {
 {{ $name := .TypeName }}
 {{ $queryName := .QueryName }}
 
+func Save(f *{{$name}}) *{{$name}} {
+	New{{$queryName}}().save(f)
+	return f
+}
+
 {{range .Fields.UniIndex}}
 func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
@@ -246,11 +251,6 @@ func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	}
 
 	return build.update(p)
-}
-
-func Save(f *{{$name}}) *{{$name}} {
-	New{{$queryName}}().save(f)
-	return f
 }
 
 func CheckExistBy{{.StructKey}} (m {{.Type}}) bool {
