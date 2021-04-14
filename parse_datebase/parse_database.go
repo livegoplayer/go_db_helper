@@ -123,7 +123,7 @@ func Parse(APPRoot string) {
 
 		for k, field := range fields {
 			if field.Key == "PRI" {
-				fields[k].ColumnPrimaryStr = ";PRIMARY_KEY"
+				t.Fields[k].ColumnPrimaryStr = ";PRIMARY_KEY"
 			}
 		}
 
