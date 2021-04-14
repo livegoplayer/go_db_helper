@@ -236,6 +236,11 @@ func Save(f *{{$name}}) *{{$name}} {
 	return f
 }
 
+func Update{{$name}}All(p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	return build.update(p)
+}
+
 {{range .Fields.UniIndex}}
 func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
@@ -268,11 +273,6 @@ func Update{{$name}}By{{.StructKey}}sWhatEver(x []{{.Type}}, p *{{$name}}) int64
 func Update{{$name}}By{{.StructKey}}(x {{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 	build.kWhe{{.StructKey}}(x)
-	return build.update(p)
-}
-
-func Update{{$name}}All(p *{{$name}}) int64 {
-	build := New{{$queryName}}()
 	return build.update(p)
 }
 
