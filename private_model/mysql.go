@@ -87,7 +87,7 @@ func (mt *MysqlTask) parseField(fileTxt string) (DefineFields, []Index) {
 		}
 
 		isNum := IsExists(field[2], []string{"int64", "int", "float64", "float32"})
-		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum})
+		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, ParamName: UnderLineToCamel(field[3])})
 	}
 
 	indexs = ParseIndex(indexMap, names)
@@ -137,8 +137,8 @@ func (mt *MysqlTask) Run() {
 				"import \"reflect\"\n" +
 				"import \"" + GetBuildPath() + "\"\n"
 
-			for i, tname := range workTypes {
-				query += mt.renderQuery(funcs, tname, workFileds[i])
+			for m, tname := range workTypes {
+				query += mt.renderQuery(funcs, tname, workFileds[m])
 			}
 
 			Write(query, filepath.Join(mt.WriteDirPath, "lib_auto_generate_query.go"))

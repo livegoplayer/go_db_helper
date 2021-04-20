@@ -59,6 +59,7 @@ func ToPrivate(str string) string {
 type DefineField struct {
 	StructKey string
 	Key       string
+	ParamName string
 	Type      string
 	Number    bool
 }
@@ -102,7 +103,7 @@ type Render struct {
 // 渲染
 func (t Render) Render(tmp string) string {
 	var doc bytes.Buffer
-	tm, err := template.New("code").Parse(tmp)
+	tm, err := template.New("code").Funcs(GetHelperFuncs()).Parse(tmp)
 	if err != nil {
 		panic(err)
 	}
@@ -261,100 +262,186 @@ func Count{{$name}}All() int64 {
 	return build.Count()
 }
 {{range .Fields.UniIndex}}
-func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
+func Update{{$name}}By{{getFieldNames .Fields}} ({{getFieldParams .Fields}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.update(p)
+}
+
+{{if eq (len .Fields) 1}}{{ $firstField := (getFirstField .Fields)}}
+func Update{{$name}}By{{$firstField.StructKey}}s ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 
-	if len(x) == 0 {
+	if len({{$firstField.ParamName}}) == 0 {
 		return 0
 	}
 
-	if len(x) == 1 {
-		build.kWhe{{.StructKey}}(x[0])
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
 	}else{
-		build.kWhe{{.StructKey}}In(x)
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
 	}
 
 	return build.update(p)
 }
 
-func Update{{$name}}By{{.StructKey}}sWhatEver (x []{{.Type}}, p *{{$name}}) int64 {
+func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 
-	if len(x) == 1 {
-		build.kWhe{{.StructKey}}(x[0])
-	}else if len(x) > 1{
-		build.kWhe{{.StructKey}}In(x)
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
+	}else{
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
 	}
 
 	return build.update(p)
 }
+{{end}}
 
-func Update{{$name}}By{{.StructKey}} (x {{.Type}}, p *{{$name}}) int64 {
+func CheckExistBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) bool {
 	build := New{{$queryName}}()
-	build.kWhe{{.StructKey}}(x)
-	return build.update(p)
-}
-
-func CheckExistBy{{.StructKey}} (m {{.Type}}) bool {
-	cnt := New{{$queryName}}().kWhe{{.StructKey}}(m).Count()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	cnt := build.Count()
 	return cnt > 0
 }
 
-func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
-	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
+func GetOneBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.GetOne()
 }
 
-func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
-	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
+func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.First()
 }
 {{end}}{{range .Fields.MultiIndex}}
-func FetchBy{{.StructKey}} (m {{.Type}}) {{$name}}Collect {
-	return New{{$queryName}}().kWhe{{.StructKey}}(m).Get()
-}
-
-func GetFirstBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
-	return New{{$queryName}}().kWhe{{.StructKey}}(m).First()
-}
-
-func GetOneBy{{.StructKey}} (m {{.Type}}) *{{$name}} {
-	return New{{$queryName}}().kWhe{{.StructKey}}(m).GetOne()
-}
-
-func Update{{$name}}By{{.StructKey}} (x {{.Type}}, p *{{$name}}) int64 {
+func FetchBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) {{$name}}Collect {
 	build := New{{$queryName}}()
-	build.kWhe{{.StructKey}}(x)
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.Get()
+}
+
+func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.First()
+}
+
+func GetOneBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.GetOne()
+}
+
+func UpdateBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
 	return build.update(p)
 }
 
-func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
+{{if eq (len .Fields) 1}}{{ $firstField := (index .Fields 0)}}
+func Update{{$name}}By{{$firstField.StructKey}} ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 
-	if len(x) == 0 {
+	if len({{$firstField.ParamName}}) == 0 {
 		return 0
 	}
 
-	if len(x) == 1 {
-		build.kWhe{{.StructKey}}(x[0])
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
 	}else{
-		build.kWhe{{.StructKey}}In(x)
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
 	}
 
 	return build.update(p)
 }
 
-func Count{{$name}}By{{.StructKey}} (x []{{.Type}}) int64 {
+func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
+	build := New{{$queryName}}()
+
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
+	}else{
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
+	}
+
+	return build.update(p)
+}
+
+func Count{{$name}}By{{$firstField.StructKey}}s ({{$firstField.ParamName}} []{{$firstField.Type}}) int64 {
 	if len(x) == 0 {
 		return 0
 	}
 	build := New{{$queryName}}()
-	if len(x) == 1 {
-		build.kWhe{{.StructKey}}(x[0])
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
 	}else{
-		build.kWhe{{.StructKey}}In(x)
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
 	}
 
 	return build.Count()
 }
 {{end}}
+{{end}}
 `
+}
+
+func GetHelperFuncs() map[string]interface{} {
+	return template.FuncMap{
+		"getFieldNames": func(sli []DefineField) string {
+			str := ""
+			for k, v := range sli {
+				str += v.StructKey
+				if k != len(sli)-1 {
+					str += "And"
+				}
+			}
+			return str
+		},
+		"getFirstField": func(sli []DefineField) DefineField {
+			return sli[0]
+		},
+		"getFieldParams": func(sli []DefineField) string {
+			str := ""
+			for k, v := range sli {
+				str += v.ParamName + " " + v.Type
+				if k != len(sli)-1 {
+					str += ", "
+				}
+			}
+			return str
+		},
+	}
+}
+
+// 将下划线风格的单词变为驼峰命名的单词
+func UnderLineToCamel(line string) string {
+	words := strings.Split(line, "_")
+	n := ""
+	for k, w := range words {
+		if k == 0 {
+			n += w
+			continue
+		}
+		n += strings.ToUpper(w[0:1]) + w[1:]
+	}
+	return n
 }
