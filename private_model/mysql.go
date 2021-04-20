@@ -166,7 +166,7 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed File) stri
 
 	for _, v := range filed.IndexMap {
 		if v.IsMulti {
-			t.Fields.MutiIndex = append(t.Fields.MutiIndex, v)
+			t.Fields.MultiIndex = append(t.Fields.MultiIndex, v)
 		}
 
 		if v.IsUnique {
