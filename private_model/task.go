@@ -60,20 +60,28 @@ type DefineField struct {
 	StructKey string
 	Key       string
 	Type      string
-	IsPrimary bool
-	IsUnique  bool
-	IsMulti   bool
 	Number    bool
 }
 
+/**
+@Collect
+*/
+type DefineFields []DefineField
+
+type Index struct {
+	IsUnique bool
+	IsMulti  bool
+	Fields   DefineFields
+}
+
 type Fields struct {
-	All        []DefineField
-	Number     []DefineField
-	Pluck      []DefineField
-	PluckUni   []DefineField
-	UniIndex   []DefineField
-	MultiIndex []DefineField
-	Map        []DefineField
+	All       DefineFields
+	Number    DefineFields
+	Pluck     DefineFields
+	PluckUni  DefineFields
+	Map       DefineFields
+	UniIndex  []Index
+	MutiIndex []Index
 }
 
 type Func struct {

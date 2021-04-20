@@ -41,11 +41,13 @@ func (mt *MysqlTask) parseFunction() []Func {
 	return funcs
 }
 
-func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
+func (mt *MysqlTask) parseField(fileTxt string) (DefineFields, []Index) {
 	// \s+ 用于去除任何空白字符，其后的 \w+? 用于获取字段名，如果存在使用 // 单行注释字段该字段将会被略过
 	reg := regexp.MustCompile("@\\s+(\\w+?)\\s+(\\S+?)\\s+`gorm:\"(\\S+?)\"[^`]+?json:\"(\\S+?)\"`.*?@")
 	x := reg.FindAllStringSubmatch(fileTxt, -1)
-	names := make([]DefineField, 0)
+	names := make(DefineFields, 0)
+	indexs := make([]Index, 0)
+	indexMap := make(map[string][]string, 0)
 	for _, field := range x {
 		// field[0] Raw Str
 		// field[1] Struct Field Name
@@ -53,9 +55,6 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 		// field[3] gorm tag
 		// field[4] json tag
 
-		isPrimary := false
-		isUnique := false
-		isMuti := false
 		// 获取 column name
 		if len(field) > 3 {
 			// 存在 column
@@ -63,15 +62,19 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 				begin := pos + len("column:")
 				// 区分 gorm:"column:theater_id;PRIMARY_KEY"
 				if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
-					if field[3][sp:] == ";PRIMARY_KEY" {
-						isPrimary = true
+					str := strings.Trim(field[3][sp:], ";")
+					i := strings.Split(str, ";")
+					f := field[3][begin:sp]
+
+					for _, v := range i {
+						if indexMap[v] == nil {
+							indexMap[v] = make([]string, 0)
+						}
+						if !IsExists(f, indexMap[v]) {
+							indexMap[v] = append(indexMap[v], f)
+						}
 					}
-					if field[3][sp:] == ";UNIQUE_KEY" {
-						isUnique = true
-					}
-					if field[3][sp:] == ";MULTI_KEY" {
-						isMuti = true
-					}
+
 					field[3] = field[3][begin:sp]
 				} else {
 					field[3] = field[3][begin:]
@@ -82,11 +85,14 @@ func (mt *MysqlTask) parseField(fileTxt string) []DefineField {
 		} else {
 			continue
 		}
+
 		isNum := IsExists(field[2], []string{"int64", "int", "float64", "float32"})
-		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum, IsPrimary: isPrimary, IsUnique: isUnique, IsMulti: isMuti})
+		names = append(names, DefineField{StructKey: field[1], Key: field[3], Type: field[2], Number: isNum})
 	}
 
-	return names
+	indexs = ParseIndex(indexMap, names)
+
+	return names, indexs
 }
 
 func NewMysqlTask(targetPath, PackageName string) *MysqlTask {
@@ -121,7 +127,7 @@ func (mt *MysqlTask) Run() {
 	allTypes, fileds := mt.getAllTypeName()
 
 	workTypes := make([]string, 0)
-	workFileds := make([][]DefineField, 0)
+	workFileds := make([]File, 0)
 	for i := range allTypes {
 		workTypes = append(workTypes, allTypes[i])
 		workFileds = append(workFileds, fileds[i])
@@ -138,42 +144,35 @@ func (mt *MysqlTask) Run() {
 			Write(query, filepath.Join(mt.WriteDirPath, "lib_auto_generate_query.go"))
 
 			workTypes = make([]string, 0)
-			workFileds = make([][]DefineField, 0)
+			workFileds = make([]File, 0)
 		}
 	}
-
-	// 最后写入一个空文件，解决 n个分卷, 切换到 n-1个分卷时，第n分卷的内容重复的问题
-	//ioutil.WriteFile(filepath.Join(mt.WriteDirPath, fmt.Sprintf("lib_auto_generate_collect_%d.go", fileNums+1)), []byte(mt.topLine()), 0644)
-	//ioutil.WriteFile(filepath.Join(mt.WriteDirPath, fmt.Sprintf("lib_auto_generate_query_%d.go", fileNums+1)), []byte(mt.topLine()), 0644)
-
 }
 
-func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineField) string {
-	nums := make([]DefineField, 0)
-	UniIndex := make([]DefineField, 0)
-	MultiIndex := make([]DefineField, 0)
-	for _, i := range filed {
+func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed File) string {
+	nums := make(DefineFields, 0)
+	for _, i := range filed.Files {
 		if i.Number {
 			nums = append(nums, i)
 		}
-
-		if i.IsPrimary || i.IsUnique {
-			UniIndex = append(UniIndex, i)
-		}
-
-		if i.IsMulti {
-			MultiIndex = append(MultiIndex, i)
-		}
 	}
 	t := Render{funcs, typeName, typeName + "Query", mt.DriverName, Fields{
-		All:        filed,
-		Pluck:      filed,
-		PluckUni:   filed,
-		Map:        filed,
-		Number:     nums,
-		UniIndex:   UniIndex,
-		MultiIndex: MultiIndex,
+		All:      filed.Files,
+		Pluck:    filed.Files,
+		PluckUni: filed.Files,
+		Map:      filed.Files,
+		Number:   nums,
 	}}
+
+	for _, v := range filed.IndexMap {
+		if v.IsMulti {
+			t.Fields.MutiIndex = append(t.Fields.MutiIndex, v)
+		}
+
+		if v.IsUnique {
+			t.Fields.UniIndex = append(t.Fields.UniIndex, v)
+		}
+	}
 
 	code := t.Render(mt.ExecTemplate())
 	if mt.IsPrivate {
@@ -190,10 +189,15 @@ func (mt *MysqlTask) renderQuery(funcs []Func, typeName string, filed []DefineFi
 	return code
 }
 
-func (mt *MysqlTask) getAllTypeName() ([]string, [][]DefineField) {
+type File struct {
+	Files    DefineFields
+	IndexMap []Index
+}
+
+func (mt *MysqlTask) getAllTypeName() ([]string, []File) {
 	files, _ := ioutil.ReadDir(mt.FromDirPath)
 	tables := make([]string, 0)
-	fields := make([][]DefineField, 0)
+	fields := make([]File, 0)
 	for _, f := range files {
 
 		if f.IsDir() {
@@ -222,10 +226,12 @@ func (mt *MysqlTask) getAllTypeName() ([]string, [][]DefineField) {
 			continue
 		}
 
-		filed := mt.parseField(targetStructStr[0])
-		fields = append(fields, filed)
+		fs := File{}
+		fs.Files, fs.IndexMap = mt.parseField(targetStructStr[0])
+		fields = append(fields, fs)
 		tables = append(tables, name)
 	}
+
 	return tables, fields
 }
 
@@ -382,4 +388,33 @@ func InArray(val interface{}, array interface{}) (exists bool, index int) {
 	}
 
 	return
+}
+
+func ParseIndex(m map[string][]string, fields DefineFields) []Index {
+	list := make([]Index, 0)
+	for key, f := range m {
+		i := Index{}
+		if strings.HasSuffix(key, "PRIMARY_KEY") {
+			i.IsUnique = true
+		}
+
+		if strings.HasSuffix(key, "_UNIQUE") {
+			i.IsUnique = true
+		}
+
+		if strings.HasSuffix(key, "_MULTI") {
+			i.IsMulti = true
+		}
+
+		fieldsMap := fields.KeyByKey()
+		for _, name := range f {
+			if field, ok := fieldsMap[name]; ok {
+				i.Fields = append(i.Fields, field)
+			}
+		}
+
+		list = append(list, i)
+	}
+
+	return list
 }
