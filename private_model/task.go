@@ -247,6 +247,11 @@ func Fetch{{$name}}All() {{$name}}Collect {
 	build := New{{$queryName}}()
 	return build.Get()
 }
+
+func Count{{$name}}All() int64 {
+	build := New{{$queryName}}()
+	return build.Count()
+}
 {{range .Fields.UniIndex}}
 func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
@@ -327,6 +332,20 @@ func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	}
 
 	return build.update(p)
+}
+
+func Count{{$name}}By{{.StructKey}} (x []{{.Type}}) int64 {
+	if len(x) == 0 {
+		return 0
+	}
+	build := New{{$queryName}}()
+	if len(x) == 1 {
+		build.kWhe{{.StructKey}}(x[0])
+	}else{
+		build.kWhe{{.StructKey}}In(x)
+	}
+
+	return build.Count()
 }
 {{end}}
 `
