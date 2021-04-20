@@ -416,7 +416,7 @@ func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamNam
 }
 
 func Count{{$name}}By{{$firstField.StructKey}}s ({{$firstField.ParamName}} []{{$firstField.Type}}) int64 {
-	if len(x) == 0 {
+	if len({{$firstField.ParamName}}) == 0 {
 		return 0
 	}
 	build := New{{$queryName}}()
