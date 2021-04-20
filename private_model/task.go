@@ -310,6 +310,45 @@ func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamNam
 
 	return build.update(p)
 }
+
+func FetchBy{{$firstField.StructKey}}s ({{$firstField.ParamName}} []{{$firstField.Type}}) {{$name}}Collect {
+	build := New{{$queryName}}()
+
+	if len({{$firstField.ParamName}}) == 0 {
+		return make({{$name}}Collect, 0)
+	}
+
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
+	}else{
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
+	}
+
+	return build.Get()
+}
+
+func FetchBy{{$firstField.StructKey}}sWithPageSize ({{$firstField.ParamName}} []{{$firstField.Type}}, page int, pageSize int) {{$name}}Collect {
+	if page == 0 {
+		page = 1
+	}
+
+	offset := (page - 1) * pageSize
+
+	build := New{{$queryName}}()
+
+	if len({{$firstField.ParamName}}) == 0 {
+		return make({{$name}}Collect, 0)
+	}
+
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
+	}else{
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
+	}
+
+	return build.Skip(offset).Limit(pageSize).Get()
+}
+
 {{end}}
 
 func CheckExistBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) bool {
