@@ -257,15 +257,15 @@ func Fetch{{$name}}All() {{$name}}Collect {
 	return build.Get()
 }
 
-func Fetch{{$name}}AllWithPageSize (page int, size int) {{$name}}Collect {
+func Fetch{{$name}}AllWithPageSize (page int, pageSize int) {{$name}}Collect {
 	if page == 0 {
 		page = 1
 	}
 
-	offset := (page - 1) * size
+	offset := (page - 1) * pageSize
 
 	build := New{{$queryName}}()
-	return build.Skip(offset).Limit(size).Get()
+	return build.Skip(offset).Limit(pageSize).Get()
 }
 
 func Count{{$name}}All() int64 {
@@ -381,15 +381,15 @@ func FetchBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) {{$name}}Coll
 	return build.Get()
 }
 
-func FetchBy{{getFieldNames .Fields}}WithPageSize ({{getFieldParams .Fields}}, page int, size int) {{$name}}Collect {
+func FetchBy{{getFieldNames .Fields}}WithPageSize ({{getFieldParams .Fields}}, page int, pageSize int) {{$name}}Collect {
 	if page == 0 {
 		page = 1
 	}
 
-	offset := (page - 1) * size
+	offset := (page - 1) * pageSize
 
 	build := New{{$queryName}}()
-	return build.Skip(offset).Limit(size).Get()
+	return build.Skip(offset).Limit(pageSize).Get()
 }
 
 func GetOneBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
@@ -441,12 +441,12 @@ func FetchBy{{$firstField.StructKey}}s ({{$firstField.ParamName}} []{{$firstFiel
 	return build.Get()
 }
 
-func FetchBy{{$firstField.StructKey}}sWithPageSize ({{$firstField.ParamName}} []{{$firstField.Type}}, page int, size int) {{$name}}Collect {
+func FetchBy{{$firstField.StructKey}}sWithPageSize ({{$firstField.ParamName}} []{{$firstField.Type}}, page int, pageSize int) {{$name}}Collect {
 	if page == 0 {
 		page = 1
 	}
 
-	offset := (page - 1) * size
+	offset := (page - 1) * pageSize
 
 	build := New{{$queryName}}()
 
@@ -460,7 +460,7 @@ func FetchBy{{$firstField.StructKey}}sWithPageSize ({{$firstField.ParamName}} []
 		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
 	}
 
-	return build.Skip(offset).Limit(size).Get()
+	return build.Skip(offset).Limit(pageSize).Get()
 }
 
 func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
