@@ -243,7 +243,7 @@ func Update{{$name}}All(p *{{$name}}) int64 {
 	return build.update(p)
 }
 
-func Fetch{{$name}}All(p *{{$name}}) {{$name}}Collect {
+func Fetch{{$name}}All() {{$name}}Collect {
 	build := New{{$queryName}}()
 	return build.Get(p)
 }
