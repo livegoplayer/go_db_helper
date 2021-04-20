@@ -403,6 +403,22 @@ func Update{{$name}}By{{$firstField.StructKey}} ({{$firstField.ParamName}} []{{$
 	return build.update(p)
 }
 
+func FetchBy{{$firstField.StructKey}}s {{$firstField.ParamName}} []{{$firstField.Type}}) {{$name}}Collect {
+	build := New{{$queryName}}()
+
+	if len({{$firstField.ParamName}}) == 0 {
+		return make({{$name}}Collect, 0)
+	}
+
+	if len({{$firstField.ParamName}}) == 1 {
+		build.kWhe{{$firstField.StructKey}}({{$firstField.ParamName}}[0])
+	}else{
+		build.kWhe{{$firstField.StructKey}}In({{$firstField.ParamName}})
+	}
+
+	return build.Get()
+}
+
 func Update{{$name}}By{{$firstField.StructKey}}sWhatEver ({{$firstField.ParamName}} []{{$firstField.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 
