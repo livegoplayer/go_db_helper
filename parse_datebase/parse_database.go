@@ -62,6 +62,26 @@ type Table struct {
 	Fields        []Field `gorm:"-" json:"fields"`
 }
 
+/**
+@Collect
+*/
+type TableIndexCollect []TableIndex
+
+type TableIndex struct {
+	Table        string `gorm:"column:Table"`
+	NonUnique    int64  `gorm:"column:Non_unique"`
+	KeyName      string `gorm:"column:Key_name"`
+	SeqInIndex   int64  `gorm:"column:Seq_in_index"`
+	ColumnName   string `gorm:"column:Column_name"`
+	Collation    string `gorm:"column:Collation"`
+	Cardinality  int64  `gorm:"column:Cardinality"`
+	SubPart      string `gorm:"column:Sub_part"`
+	Packed       string `gorm:"column:Packed"`
+	IndexType    string `gorm:"column:Index_type"`
+	Comment      string `gorm:"column:Comment"`
+	IndexComment string `gorm:"column:Index_comment"`
+}
+
 // too 从这里可以修改默认的数据库
 func (t *Table) Connect() string {
 	return string(mysqlHelper.DefaultDbName)
