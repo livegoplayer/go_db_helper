@@ -9,7 +9,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -35,38 +37,6 @@ type Field struct {
 	ColumnPrimaryStr string `gorm:"-"`
 }
 
-type Table struct {
-	Name          string  `gorm:"column:Name"`
-	TableName     string  `gorm:"-" json:"table_name"`
-	PackageName   string  `gorm:"-" json:"package_name"`
-	Prefix        string  `gorm:"column:prefix" json:"prefix"`
-	Engine        string  `gorm:"column:Engine"`
-	Version       string  `gorm:"column:Version"`
-	RowFormat     string  `gorm:"column:Row_format"`
-	Rows          string  `gorm:"column:Rows"`
-	AvgRowLengt   string  `gorm:"column:Avg_row_length"`
-	DataLength    string  `gorm:"column:Data_length"`
-	MaxDataLength string  `gorm:"column:Max_data_length"`
-	IndexLength   string  `gorm:"column:Index_length"`
-	DataFree      string  `gorm:"column:Data_free"`
-	AutoIncrement string  `gorm:"column:Auto_increment"`
-	CreateTime    string  `gorm:"column:Create_time"`
-	UpdateTime    string  `gorm:"column:Update_time"`
-	CheckTime     string  `gorm:"column:Check_time"`
-	Collation     string  `gorm:"column:Collation"`
-	Checksum      string  `gorm:"column:Checksum"`
-	CreateOptions string  `gorm:"column:Create_options"`
-	Comment       string  `gorm:"column:Comment"`
-	DbName        string  `gorm:"-"`
-	IsSplit       bool    `gorm:"-" json:"is_split"`
-	Fields        []Field `gorm:"-" json:"fields"`
-}
-
-/**
-@Collect
-*/
-type TableIndexCollect []TableIndex
-
 type TableIndex struct {
 	Table        string `gorm:"column:Table"`
 	NonUnique    int64  `gorm:"column:Non_unique"`
@@ -81,6 +51,51 @@ type TableIndex struct {
 	Comment      string `gorm:"column:Comment"`
 	IndexComment string `gorm:"column:Index_comment"`
 }
+
+type Table struct {
+	Name            string            `gorm:"column:Name"`
+	TableName       string            `gorm:"-" json:"table_name"`
+	PackageName     string            `gorm:"-" json:"package_name"`
+	Prefix          string            `gorm:"column:prefix" json:"prefix"`
+	Engine          string            `gorm:"column:Engine"`
+	Version         string            `gorm:"column:Version"`
+	RowFormat       string            `gorm:"column:Row_format"`
+	Rows            string            `gorm:"column:Rows"`
+	AvgRowLengt     string            `gorm:"column:Avg_row_length"`
+	DataLength      string            `gorm:"column:Data_length"`
+	MaxDataLength   string            `gorm:"column:Max_data_length"`
+	IndexLength     string            `gorm:"column:Index_length"`
+	DataFree        string            `gorm:"column:Data_free"`
+	AutoIncrement   string            `gorm:"column:Auto_increment"`
+	CreateTime      string            `gorm:"column:Create_time"`
+	UpdateTime      string            `gorm:"column:Update_time"`
+	CheckTime       string            `gorm:"column:Check_time"`
+	Collation       string            `gorm:"column:Collation"`
+	Checksum        string            `gorm:"column:Checksum"`
+	CreateOptions   string            `gorm:"column:Create_options"`
+	Comment         string            `gorm:"column:Comment"`
+	DbName          string            `gorm:"-"`
+	IsSplit         bool              `gorm:"-" json:"is_split"`
+	Fields          []Field           `gorm:"-" json:"fields"`
+	TableIndexs     TableIndexCollect `gorm:"-" json:"fields"`
+	TableIndexSlice []Index           `gorm:"-" json:"fields"`
+}
+
+/**
+@Collect
+*/
+type TableIndexCollect []TableIndex
+
+type Index struct {
+	Name        string
+	Type        IndexType
+	FieldsSlice []string
+}
+
+type IndexType string
+
+const UNI IndexType = "UNIQUE"
+const MUTI IndexType = "MUTI"
 
 // too 从这里可以修改默认的数据库
 func (t *Table) Connect() string {
@@ -104,6 +119,7 @@ func Parse(APPRoot string) {
 	}
 
 	fields := make([]Field, 0)
+	tableIndexs := make([]TableIndex, 0)
 	tables := make([]Table, 0)
 	sql := "show table status "
 	if len(Name) > 0 {
@@ -113,8 +129,11 @@ func Parse(APPRoot string) {
 
 	for k, t := range tables {
 		mysql.NewBuild(&fields).TableName("disable").Raw("show full fields from " + t.Name)
+		mysql.NewBuild(&tableIndexs).TableName("disable").Raw(" SHOW INDEX FROM " + t.Name)
+
 		tables[k].Fields = fields
 		tables[k].Prefix = Prefix
+		tables[k].TableIndexs = tableIndexs
 	}
 
 	currentDirPath := APPRoot
@@ -141,17 +160,62 @@ func Parse(APPRoot string) {
 			}
 		}
 
+		if t.TableIndexSlice == nil {
+			t.TableIndexSlice = make([]Index, 0)
+		}
+
+		// 初始化
+		for keyName, indexs := range t.TableIndexs.GroupByKeyName() {
+			i := Index{
+				Name: keyName,
+			}
+
+			i.FieldsSlice = make([]string, len(indexs))
+			for _, index := range indexs {
+				// 如果是unique
+				if index.NonUnique == 0 {
+					i.Type = UNI
+				} else {
+					i.Type = MUTI
+				}
+				i.FieldsSlice[index.SeqInIndex-1] = index.ColumnName
+			}
+
+			t.TableIndexSlice = append(t.TableIndexSlice, i)
+		}
+
+		newSlice := make([]Index, 0)
+		newSlice = append(newSlice, t.TableIndexSlice...)
+		for _, index := range t.TableIndexSlice {
+			// 如果是独立的index
+			if index.Type == UNI && len(index.FieldsSlice) > 1 {
+				slice := index
+				slice.Type = MUTI
+				slice.FieldsSlice = make([]string, 0)
+				length := len(index.FieldsSlice) - 1
+				for length > 0 {
+					for i := 0; i < length; i++ {
+						slice.FieldsSlice = append(slice.FieldsSlice, index.FieldsSlice[i])
+					}
+					length--
+				}
+				newSlice = append(newSlice, slice)
+			}
+		}
+		t.TableIndexSlice = newSlice
+
 		for k, field := range t.Fields {
-			if field.Key == "PRI" {
-				t.Fields[k].ColumnPrimaryStr = ";PRIMARY_KEY"
-			}
-
-			if field.Key == "UNI" {
-				t.Fields[k].ColumnPrimaryStr = ";UNIQUE_KEY"
-			}
-
-			if field.Key == "MUL" {
-				t.Fields[k].ColumnPrimaryStr = ";MULTI_KEY"
+			for i, index := range t.TableIndexSlice {
+				if index.Name == "PRIMARY" && IsExists(field.Field, index.FieldsSlice) {
+					t.Fields[k].ColumnPrimaryStr = ";PRIMARY_KEY"
+				} else if IsExists(field.Field, index.FieldsSlice) {
+					t.Fields[k].ColumnPrimaryStr += ";" + index.Name + "_" + strconv.FormatInt(int64(i), 10)
+					if index.Type == UNI {
+						t.Fields[k].ColumnPrimaryStr += "_UNIQUE"
+					} else {
+						t.Fields[k].ColumnPrimaryStr += "_MULTI"
+					}
+				}
 			}
 		}
 
@@ -241,4 +305,29 @@ func UnderLineToCamel(line string) string {
 		n += strings.ToUpper(w[0:1]) + w[1:]
 	}
 	return n
+}
+
+func InArray(val interface{}, array interface{}) (exists bool, index int) {
+	exists = false
+	index = -1
+
+	switch reflect.TypeOf(array).Kind() {
+	case reflect.Slice:
+		s := reflect.ValueOf(array)
+
+		for i := 0; i < s.Len(); i++ {
+			if reflect.DeepEqual(val, s.Index(i).Interface()) == true {
+				index = i
+				exists = true
+				return
+			}
+		}
+	}
+
+	return
+}
+
+func IsExists(val interface{}, array interface{}) bool {
+	e, _ := InArray(val, array)
+	return e
 }
