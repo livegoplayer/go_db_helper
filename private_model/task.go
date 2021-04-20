@@ -76,13 +76,13 @@ type Index struct {
 }
 
 type Fields struct {
-	All       DefineFields
-	Number    DefineFields
-	Pluck     DefineFields
-	PluckUni  DefineFields
-	Map       DefineFields
-	UniIndex  []Index
-	MutiIndex []Index
+	All        DefineFields
+	Number     DefineFields
+	Pluck      DefineFields
+	PluckUni   DefineFields
+	Map        DefineFields
+	UniIndex   []Index
+	MultiIndex []Index
 }
 
 type Func struct {
@@ -262,6 +262,7 @@ func Count{{$name}}All() int64 {
 	return build.Count()
 }
 {{range .Fields.UniIndex}}
+// uniIndex
 func Update{{$name}}By{{getFieldNames .Fields}} ({{getFieldParams .Fields}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
 	{{range .Fields}}
@@ -317,6 +318,14 @@ func GetOneBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
 	return build.GetOne()
 }
 
+func DeleteBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) int64 {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.Delete()
+}
+
 func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
 	build := New{{$queryName}}()
 	{{range .Fields}}
@@ -324,7 +333,10 @@ func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}}
 	{{end}}
 	return build.First()
 }
-{{end}}{{range .Fields.MultiIndex}}
+{{end}}
+
+{{range .Fields.MultiIndex}}
+// MultiIndex
 func FetchBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) {{$name}}Collect {
 	build := New{{$queryName}}()
 	{{range .Fields}}
