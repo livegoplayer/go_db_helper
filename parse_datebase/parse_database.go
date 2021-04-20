@@ -199,7 +199,23 @@ func Parse(APPRoot string) {
 					}
 					length--
 				}
-				newSlice = append(newSlice, slice)
+
+				addFlg := false
+				for _, v := range newSlice {
+					if len(v.FieldsSlice) == len(slice.FieldsSlice) {
+						for _, s := range v.FieldsSlice {
+							if !IsExists(s, slice.FieldsSlice) {
+								addFlg = true
+								break
+							}
+						}
+					} else {
+						addFlg = true
+					}
+				}
+				if addFlg {
+					newSlice = append(newSlice, slice)
+				}
 			}
 		}
 		t.TableIndexSlice = newSlice

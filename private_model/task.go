@@ -337,6 +337,31 @@ func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}}
 
 {{range .Fields.MultiIndex}}
 // MultiIndex
+func CheckExistBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) bool {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	cnt := build.Count()
+	return cnt > 0
+}
+
+func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.First()
+}
+
+func DeleteAllBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) int64 {
+	build := New{{$queryName}}()
+	{{range .Fields}}
+	build.kWhe{{.StructKey}}({{.ParamName}})
+	{{end}}
+	return build.Delete()
+}
+
 func FetchBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) {{$name}}Collect {
 	build := New{{$queryName}}()
 	{{range .Fields}}
