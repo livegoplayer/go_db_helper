@@ -243,6 +243,10 @@ func Update{{$name}}All(p *{{$name}}) int64 {
 	return build.update(p)
 }
 
+func Fetch{{$name}}All(p *{{$name}}) {{$name}}Collect {
+	build := New{{$queryName}}()
+	return build.Get(p)
+}
 {{range .Fields.UniIndex}}
 func Update{{$name}}By{{.StructKey}}s(x []{{.Type}}, p *{{$name}}) int64 {
 	build := New{{$queryName}}()
