@@ -370,14 +370,6 @@ func FetchBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) {{$name}}Coll
 	return build.Get()
 }
 
-func GetFirstBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
-	build := New{{$queryName}}()
-	{{range .Fields}}
-	build.kWhe{{.StructKey}}({{.ParamName}})
-	{{end}}
-	return build.First()
-}
-
 func GetOneBy{{getFieldNames .Fields}} ({{getFieldParams .Fields}}) *{{$name}} {
 	build := New{{$queryName}}()
 	{{range .Fields}}
