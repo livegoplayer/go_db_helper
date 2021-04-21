@@ -237,7 +237,7 @@ func Parse(APPRoot string) {
 		}
 
 		for k, field := range t.Fields {
-			t.Fields[k].GormTagStr = field.Field
+			t.Fields[k].GormTagStr = "column:" + field.Field
 			t.Fields[k].JsonTagStr = field.Field
 			if strings.HasPrefix(field.Default, "CURRENT_TIMESTAMP") {
 				t.Fields[k].GormTagStr = "-"
@@ -297,7 +297,7 @@ const PREFIX = "{{.Prefix}}"
 
 // {{.Comment}}
 type {{.TableName}} struct {   {{range .Fields}}
-	{{.Name}}  {{.Type}} ` + "`" + `gorm:"column:{{.GormTagStr}}{{.ColumnPrimaryStr}}" ` + `json:"{{.JsonTagStr}}"` + "`" + ` // {{.Comment}} {{end}} 
+	{{.Name}}  {{.Type}} ` + "`" + `gorm:"{{.GormTagStr}}{{.ColumnPrimaryStr}}" ` + `json:"{{.JsonTagStr}}"` + "`" + ` // {{.Comment}} {{end}} 
 }
 {{if .IsSplit}}
 func (t * {{.TableName}}) BaseName() {
