@@ -77,8 +77,8 @@ type Table struct {
 	DbName          string            `gorm:"-"`
 	IsSplit         bool              `gorm:"-" json:"is_split"`
 	Fields          []Field           `gorm:"-" json:"fields"`
-	TableIndexs     TableIndexCollect `gorm:"-" json:"fields"`
-	TableIndexSlice []Index           `gorm:"-" json:"fields"`
+	TableIndexs     TableIndexCollect `gorm:"-"`
+	TableIndexSlice []Index           `gorm:"-"`
 }
 
 /**
