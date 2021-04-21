@@ -58,29 +58,33 @@ func (mt *MysqlTask) parseField(fileTxt string) (DefineFields, []Index) {
 		// 获取 column name
 		if len(field) > 3 {
 			// 存在 column
+			begin := 0
 			if pos := strings.Index(field[3], "column:"); pos >= 0 {
-				begin := pos + len("column:")
-				// 区分 gorm:"column:theater_id;PRIMARY_KEY"
-				if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
-					str := strings.Trim(field[3][sp:], ";")
-					i := strings.Split(str, ";")
-					f := field[3][begin:sp]
+				begin = pos + len("column:")
+			}
 
-					for _, v := range i {
-						if indexMap[v] == nil {
-							indexMap[v] = make([]string, 0)
-						}
-						if !IsExists(f, indexMap[v]) {
-							indexMap[v] = append(indexMap[v], f)
-						}
+			// 区分 gorm:"column:theater_id;PRIMARY_KEY"
+			if sp := strings.Index(field[3], ";"); sp >= 0 && sp > begin {
+				str := strings.Trim(field[3][sp:], ";")
+				i := strings.Split(str, ";")
+				f := field[3][begin:sp]
+
+				for _, v := range i {
+					if indexMap[v] == nil {
+						indexMap[v] = make([]string, 0)
 					}
-
-					field[3] = field[3][begin:sp]
-				} else {
-					field[3] = field[3][begin:]
+					if !IsExists(f, indexMap[v]) {
+						indexMap[v] = append(indexMap[v], f)
+					}
 				}
+
+				field[3] = field[3][begin:sp]
 			} else {
-				continue
+				field[3] = field[3][begin:]
+			}
+
+			if field[3] == "-" {
+				field[3] = snakeString(field[1])
 			}
 		} else {
 			continue
