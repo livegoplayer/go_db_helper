@@ -188,7 +188,7 @@ func Parse(APPRoot string) {
 		newSlice = append(newSlice, t.TableIndexSlice...)
 		for _, index := range t.TableIndexSlice {
 			// 如果是独立的index
-			if index.Type == UNI && len(index.FieldsSlice) > 1 {
+			if len(index.FieldsSlice) > 1 {
 				slice := index
 				slice.Type = MUTI
 				slice.FieldsSlice = make([]string, 0)
