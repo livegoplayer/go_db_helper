@@ -235,6 +235,12 @@ func Parse(APPRoot string) {
 			}
 		}
 
+		for k, field := range t.Fields {
+			if strings.HasPrefix(field.Field, "CURRENT_TIMESTAMP") {
+				t.Fields[k].Field = "-"
+			}
+		}
+
 		name := Name
 		if name == "" {
 			name = t.Name
