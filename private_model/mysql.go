@@ -79,9 +79,6 @@ func (mt *MysqlTask) parseField(fileTxt string) (DefineFields, []Index) {
 				} else {
 					field[3] = field[3][begin:]
 				}
-				if field[3] == "-" {
-					field[3] = snakeString(field[1])
-				}
 			} else {
 				continue
 			}
